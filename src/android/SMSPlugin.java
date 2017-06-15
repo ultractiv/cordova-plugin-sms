@@ -95,27 +95,38 @@ extends CordovaPlugin {
             JSONObject options = inputs.optJSONObject(0);
             this.setOptions(options);
             result = new PluginResult(PluginResult.Status.OK);
-        } else if (ACTION_START_WATCH.equals(action)) {
+        }
+        else if (ACTION_START_WATCH.equals(action)) {
             result = this.startWatch(callbackContext);
-        } else if (ACTION_STOP_WATCH.equals(action)) {
+        }
+        else if (ACTION_STOP_WATCH.equals(action)) {
             result = this.stopWatch(callbackContext);
-        } else if (ACTION_ENABLE_INTERCEPT.equals(action)) {
+        }
+        else if (ACTION_ENABLE_INTERCEPT.equals(action)) {
             boolean on_off = inputs.optBoolean(0);
             result = this.enableIntercept(on_off, callbackContext);
-        } else if (ACTION_DELETE_SMS.equals(action)) {
+        }
+        /*
+        else if (ACTION_DELETE_SMS.equals(action)) {
             JSONObject msg = inputs.optJSONObject(0);
             result = this.deleteSMS(msg, callbackContext);
         } else if (ACTION_RESTORE_SMS.equals(action)) {
             JSONArray smsList = inputs.optJSONArray(0);
             result = this.restoreSMS(smsList, callbackContext);
-        } else if (ACTION_LIST_SMS.equals(action)) {
+        }
+        */
+        else if (ACTION_LIST_SMS.equals(action)) {
             JSONObject filters = inputs.optJSONObject(0);
             result = this.listSMS(filters, callbackContext);
-        } else if (ACTION_SEND_SMS.equals(action)) {
+        }
+        /*
+        else if (ACTION_SEND_SMS.equals(action)) {
             JSONArray addressList = inputs.optJSONArray(0);
             String message = inputs.optString(1);
             result = this.sendSMS(addressList, message, callbackContext);
-        } else {
+        }
+        */
+        else {
             Log.d(LOGTAG, String.format("Invalid action passed: %s", action));
             result = new PluginResult(PluginResult.Status.INVALID_ACTION);
         }
