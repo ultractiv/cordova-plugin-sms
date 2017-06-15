@@ -41,6 +41,8 @@ safesmsExport.enableIntercept = function(on_off, successCallback, failureCallbac
 	cordova.exec( successCallback, failureCallback, 'SMS', 'enableIntercept', [ on_off ] );
 };
 
+/*
+
 safesmsExport.sendSMS = function(address, text, successCallback, failureCallback) {
 	var numbers;
 	if( Object.prototype.toString.call( address ) === '[object Array]' ) {
@@ -53,13 +55,17 @@ safesmsExport.sendSMS = function(address, text, successCallback, failureCallback
 		}
 		return;
 	}
-	
+
 	cordova.exec( successCallback, failureCallback, 'SMS', 'sendSMS', [ numbers, text ] );
 };
+
+*/
 
 safesmsExport.listSMS = function(filter, successCallback, failureCallback) {
 	cordova.exec( successCallback, failureCallback, 'SMS', 'listSMS', [ filter ] );
 };
+
+/*
 
 safesmsExport.deleteSMS = function(filter, successCallback, failureCallback) {
 	cordova.exec( successCallback, failureCallback, 'SMS', 'deleteSMS', [ filter ] );
@@ -75,12 +81,13 @@ safesmsExport.restoreSMS = function(msg, successCallback, failureCallback) {
 	cordova.exec( successCallback, failureCallback, 'SMS', 'restoreSMS', [ msg ] );
 };
 
+*/
+
 /*
  * Events:
- * 
+ *
  * document.addEventListener('onSMSArrive', function(e) { var sms = e.data; }
- * 
+ *
  */
 
 module.exports = safesmsExport;
-
