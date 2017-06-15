@@ -262,21 +262,38 @@ extends CordovaPlugin {
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
+
+            /*TODO: Combine multiple filters, even exclusive options */
+
             if (fid > -1) {
                 matchFilter = (fid == cur.getInt(cur.getColumnIndex("_id")));
-            } else if (fread > -1) {
-                matchFilter = (fread == cur.getInt(cur.getColumnIndex(READ)));
-            } else if (faddress.length() > 0) {
-                matchFilter = PhoneNumberUtils.compare(faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
-            } else if (fcontent.length() > 0) {
-                matchFilter = fcontent.equals(cur.getString(cur.getColumnIndex(BODY)).trim());
-            } else {
-                matchFilter = true;
             }
+            else if (fread > -1) {
+                matchFilter = (fread == cur.getInt(cur.getColumnIndex(READ)));
+            }
+
+            /*TODO: Accept array of addresses and match all at once instead */
+            else if (faddress.length() > 0) {
+                matchFilter = PhoneNumberUtils.compare(faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
+            }
+
+            /*TODO: Use RegExp matching criteria to match body */
+            else if (fcontent.length() > 0) {
+                matchFilter = fcontent.equals(cur.getString(cur.getColumnIndex(BODY)).trim());
+            }
+
+            else {
+              /*TODO: This list all messages. Drop this?! */
+              matchFilter = true;
+            }
+
             if (! matchFilter) continue;
 
-            if (i < indexFrom) continue;
-            if (i >= indexFrom + maxCount) break;
+            // if (i < indexFrom) continue;
+
+            /*TODO: Read and return all messages matching filter */
+            // if (i >= indexFrom + maxCount) break;
+
             ++i;
 
             if ((json = this.getJsonFromCursor(cur)) == null) {
