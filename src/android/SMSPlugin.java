@@ -260,7 +260,7 @@ extends CordovaPlugin {
         Uri uri = Uri.parse((SMS_URI_ALL + uri_filter));
         Cursor cur = ctx.getContentResolver().query(uri, (String[])null, "", (String[])null, null);
         int i = 0;
-        Context mContext = Activity.getApplicationContext();
+        Context mContext = ctx.getApplicationContext();
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
