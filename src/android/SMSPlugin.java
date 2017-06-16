@@ -110,7 +110,8 @@ extends CordovaPlugin {
         else if (ACTION_DELETE_SMS.equals(action)) {
             JSONObject msg = inputs.optJSONObject(0);
             result = this.deleteSMS(msg, callbackContext);
-        } else if (ACTION_RESTORE_SMS.equals(action)) {
+        }
+        else if (ACTION_RESTORE_SMS.equals(action)) {
             JSONArray smsList = inputs.optJSONArray(0);
             result = this.restoreSMS(smsList, callbackContext);
         }
@@ -259,6 +260,7 @@ extends CordovaPlugin {
         Uri uri = Uri.parse((SMS_URI_ALL + uri_filter));
         Cursor cur = ctx.getContentResolver().query(uri, (String[])null, "", (String[])null, null);
         int i = 0;
+        Context mContext = Activity.getApplicationContext();
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
@@ -273,17 +275,20 @@ extends CordovaPlugin {
             }
 
             /*TODO: Accept array of addresses and match all at once instead */
+
             else if (faddress.length() > 0) {
-                matchFilter = PhoneNumberUtils.compare(faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
+                matchFilter = PhoneNumberUtils.compare(mContext, faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
             }
 
             /*TODO: Use RegExp matching criteria to match body */
+
             else if (fcontent.length() > 0) {
                 matchFilter = fcontent.equals(cur.getString(cur.getColumnIndex(BODY)).trim());
             }
 
+            /*TODO: This list all messages. Drop this?! */
+
             else {
-              /*TODO: This list all messages. Drop this?! */
               matchFilter = true;
             }
 
