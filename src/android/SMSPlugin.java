@@ -260,7 +260,6 @@ extends CordovaPlugin {
         Uri uri = Uri.parse((SMS_URI_ALL + uri_filter));
         Cursor cur = ctx.getContentResolver().query(uri, (String[])null, "", (String[])null, null);
         int i = 0;
-        Context mContext = ctx.getApplicationContext();
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
@@ -277,7 +276,9 @@ extends CordovaPlugin {
             /*TODO: Accept array of addresses and match all at once instead */
 
             else if (faddress.length() > 0) {
-                matchFilter = PhoneNumberUtils.compare(mContext, faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
+                String address = cur.getString(cur.getColumnIndex(ADDRESS)).trim();
+     	          matchFilter =  address.contains(faddress);
+                // matchFilter = PhoneNumberUtils.compare(mContext, faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
             }
 
             /*TODO: Use RegExp matching criteria to match body */
