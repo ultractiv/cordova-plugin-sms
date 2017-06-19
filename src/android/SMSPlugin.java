@@ -22,6 +22,9 @@ import android.util.Log;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
@@ -251,20 +254,61 @@ extends CordovaPlugin {
         String uri_filter = filter.has(BOX) ? filter.optString(BOX) : "inbox";
         int fread = filter.has(READ) ? filter.optInt(READ) : -1;
         int fid = filter.has("_id") ? filter.optInt("_id") : -1;
-        String faddress = filter.optString(ADDRESS);
-        String fcontent = filter.optString(BODY);
         int indexFrom = filter.has("indexFrom") ? filter.optInt("indexFrom") : 0;
-        int maxCount = filter.has("maxCount") ? filter.optInt("maxCount") : 10;
+        int maxCount = filter.has("maxCount") ? filter.optInt("maxCount") : 100;
         JSONArray jsons = new JSONArray();
         Activity ctx = this.cordova.getActivity();
         Uri uri = Uri.parse((SMS_URI_ALL + uri_filter));
         Cursor cur = ctx.getContentResolver().query(uri, (String[])null, "", (String[])null, null);
+
+        String faddress = filter.optString(ADDRESS);
+        String fcontent = filter.optString(BODY);
+
+        // use filter.addresses over filter.address if it exists
+        if (filter.has("addresses")) {
+          JSONArray faddressList = filter.optJSONArray("addresses");
+
+          int n;
+          if ((n = faddressList.length()) > 0) {
+            String addresses = "";
+              for (int i = 0; i < n; ++i) {
+                  String address;
+                  if ((address = faddressList.optString(i)).length() <= 0) continue;
+                  addresses += "(" + address + ")";
+              }
+              faddress = addresses.replace(")(", ")|(");
+          }
+        }
+
+        Pattern faddressPattern = Pattern.compile("^" + faddress + "$");
+        Matcher faddressPatternMatcher = faddressPattern.matcher("");
+
+        // use filter.contents over filter.body if it exists
+        if (filter.has("contents")) {
+          JSONArray fcontentList = filter.optJSONArray("contents");
+          int n;
+          if ((n = fcontentList.length()) > 0) {
+              String contents = "";
+              for (int i = 0; i < n; ++i) {
+                  String content;
+                  if ((content = fcontentList.optString(i)).length() <= 0) continue;
+                  contents += "(" + content + ")";
+              }
+              fcontent = contents.replace(")(", ")|(");
+          }
+        }
+
+        Pattern fcontentPattern = Pattern.compile("^(" + fcontent + ").*", Pattern.DOTALL);
+        Matcher fcontentPatternMatcher = fcontentPattern.matcher("");
+
         int i = 0;
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
 
-            /*TODO: Combine multiple filters, even exclusive options */
+            if (i < indexFrom) continue;
+
+            // if (i >= indexFrom + maxCount) break;
 
             if (fid > -1) {
                 matchFilter = (fid == cur.getInt(cur.getColumnIndex("_id")));
@@ -273,32 +317,25 @@ extends CordovaPlugin {
                 matchFilter = (fread == cur.getInt(cur.getColumnIndex(READ)));
             }
 
-            /*TODO: Accept array of addresses and match all at once instead */
+            else if (faddress.length() > 0 || fcontent.length() > 0) {
+              Boolean addressMatch = false;
+              Boolean contentMatch = false;
 
-            else if (faddress.length() > 0) {
+              if (faddress.length() > 0) {
                 String address = cur.getString(cur.getColumnIndex(ADDRESS)).trim();
-     	          matchFilter =  address.contains(faddress);
-                // matchFilter = PhoneNumberUtils.compare(mContext, faddress, cur.getString(cur.getColumnIndex(ADDRESS)).trim());
-            }
+                addressMatch = faddressPatternMatcher.reset(address).matches();
+              }
 
-            /*TODO: Use RegExp matching criteria to match body */
+              if (fcontent.length() > 0) {
+                String content = cur.getString(cur.getColumnIndex(BODY)).trim();
+                contentMatch = fcontentPatternMatcher.reset(content).matches();
+              }
 
-            else if (fcontent.length() > 0) {
-                matchFilter = fcontent.equals(cur.getString(cur.getColumnIndex(BODY)).trim());
-            }
-
-            /*TODO: This list all messages. Drop this?! */
-
-            else {
-              matchFilter = true;
+              matchFilter = (faddress.length() > 0 && fcontent.length() > 0) ?
+                            (addressMatch && contentMatch) : (faddress.length() > 0 ? addressMatch : contentMatch);
             }
 
             if (! matchFilter) continue;
-
-            // if (i < indexFrom) continue;
-
-            /*TODO: Read and return all messages matching filter */
-            // if (i >= indexFrom + maxCount) break;
 
             ++i;
 
@@ -307,6 +344,7 @@ extends CordovaPlugin {
                 cur.close();
                 return null;
             }
+
             jsons.put((Object)json);
         }
         cur.close();
