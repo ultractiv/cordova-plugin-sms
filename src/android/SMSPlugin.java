@@ -235,12 +235,12 @@ extends CordovaPlugin {
 
         int i = 0; // number of messages matched
         while (cur.moveToNext()) {
-            JSONObject json;
-            boolean matchFilter = false;
 
             if (indexFrom > 0 && cur.getInt(cur.getColumnIndex("_id")) <= indexFrom) continue;
 
             if (i >= maxCount) break;
+
+            boolean matchFilter = false;
 
             if (fid > -1) {
                 matchFilter = (fid == cur.getInt(cur.getColumnIndex("_id")));
@@ -268,6 +268,8 @@ extends CordovaPlugin {
             }
 
             if (! matchFilter) continue;
+
+            JSONObject json;
 
             if ((json = this.getJsonFromCursor(cur)) == null) {
                 callbackContext.error("failed to get json from cursor");
