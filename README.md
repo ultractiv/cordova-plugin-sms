@@ -1,8 +1,8 @@
 # cordova-plugin-sms #
 
-This plugin is forked from the `cordova-plugin-sms` originally created and maintained by [Raymond Xie](https://github.com/floatinghotpot/cordova-plugin-sms). Please use the original plugin if you need the full features.
+This plugin is forked from the `cordova-plugin-sms` originally created and maintained by [Raymond Xie](https://github.com/floatinghotpot). Some functionality have been dropped in this fork. Please use the original [cordova-plugin-sms](https://github.com/floatinghotpot/cordova-plugin-sms) if you need the full features of the plugin in your project.
 
-This version extends the `listSMS` features to use more advanced filters, like list messages from multiple addresses, and also combine with `regex` in the body of the messages.
+This fork extends the `listSMS` functionality to use more advanced filters, like list messages from multiple addresses, and also combining with `RegExp` to match the body of the messages to list.
 
 We dropped options to `send / delete / restore` messages. This is version is modified for, and used in a project where those options are not needed.
 
@@ -50,21 +50,21 @@ startWatch(successCallback, failureCallback);
 stopWatch(successCallback, failureCallback);
 
 enableIntercept(on_off, successCallback, failureCallback);
-
-setOptions(options, successCallback, failureCallback);
 ```
 
 ### Dropped/Deprecated Methods ###
 
-Use the [original plugin](https://github.com/floatinghotpot/cordova-plugin-sms) if you need to use these features.
+The following methods are not supported in this fork of the plugin. Use the original [cordova-plugin-sms](https://github.com/floatinghotpot/cordova-plugin-sms) if you need to use these features.
 
 ```javascript
 sendSMS(addresses, text, successCallback, failureCallback);
 deleteSMS(filter, successCallback, failureCallback);
 restoreSMS(msg_or_msgs, successCallback, failureCallback);
+setOptions(options, successCallback, failureCallback);
 ```
 
 ### Credits ###
 
-This plugin is originally created and maintained by [Raymond Xie](https://github.com/floatinghotpot/cordova-plugin-sms).
-Please refer to his website for more information regarding licensing.
+Contributions to this fork of `cordova-plugin-sms` by [Yemi Agbetunsin](https://github.com/temiyemi).
+
+`cordova-plugin-sms` is originally authored by [Raymond Xie](https://github.com/floatinghotpot) and maintained at the  [cordova-plugin-sms](https://github.com/floatinghotpot/cordova-plugin-sms) repo.
