@@ -301,14 +301,14 @@ extends CordovaPlugin {
         Pattern fcontentPattern = Pattern.compile("^(" + fcontent + ").*", Pattern.DOTALL);
         Matcher fcontentPatternMatcher = fcontentPattern.matcher("");
 
-        int i = 0;
+        int i = 0; // number of messages matched
         while (cur.moveToNext()) {
             JSONObject json;
             boolean matchFilter = false;
 
-            if (i < indexFrom) continue;
+            if (indexFrom > 0 && cur.getInt(cur.getColumnIndex("_id")) <= indexFrom) continue;
 
-            // if (i >= indexFrom + maxCount) break;
+            if (i >= maxCount) break;
 
             if (fid > -1) {
                 matchFilter = (fid == cur.getInt(cur.getColumnIndex("_id")));
@@ -337,8 +337,6 @@ extends CordovaPlugin {
 
             if (! matchFilter) continue;
 
-            ++i;
-
             if ((json = this.getJsonFromCursor(cur)) == null) {
                 callbackContext.error("failed to get json from cursor");
                 cur.close();
@@ -346,6 +344,8 @@ extends CordovaPlugin {
             }
 
             jsons.put((Object)json);
+
+            ++i;
         }
         cur.close();
         callbackContext.success(jsons);
