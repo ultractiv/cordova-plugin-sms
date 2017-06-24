@@ -13,7 +13,7 @@ Use the plugin with Cordova CLI (v5.x or above). Just run:
 ```bash
 cordova plugin add https://github.com/ultractiv/cordova-plugin-sms.git
 
-# To use with Ionic v3 apps, run this ionic-native plugin
+# To use with Ionic v3 apps, install this ionic-native plugin
 npm install --save git+https://github.com/ultractiv/sms-inbox.git
 ```
 
@@ -67,10 +67,11 @@ Best practice: set only the options you require to match and list sms messages.
 let filter: object = {
   // Get the sms with the specified _id
   // NOTE: this returns only the message and disregards all other filters
-  _id: 0, // defaults to 0 (if not specified to ignore matching by _id)
+  _id: 1, // defaults to -1 (if not specified to ignore matching by _id)
 
   // Filter sms by read status
-  read: 1, // defaults to 0 (if not specified to ignore matching by read status)
+  // NOTE: 0 == Unread, 1 == Read
+  read: 1, // defaults to -1 (if not specified to ignore matching by read status)
 
   // NOTE: You may use the following filters together
   // provided you have not specified _id or read options above
