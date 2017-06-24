@@ -353,36 +353,36 @@ extends CordovaPlugin {
     }
 
     private JSONObject getJsonFromCursor(Cursor cur) {
-		JSONObject json = new JSONObject();
+  		JSONObject json = new JSONObject();
 
-		int nCol = cur.getColumnCount();
-		String keys[] = cur.getColumnNames();
+  		int nCol = cur.getColumnCount();
+  		String keys[] = cur.getColumnNames();
 
-		try {
-			for(int j=0; j<nCol; j++) {
-				switch(cur.getType(j)) {
-				case Cursor.FIELD_TYPE_NULL:
-					json.put(keys[j], null);
-					break;
-				case Cursor.FIELD_TYPE_INTEGER:
-					json.put(keys[j], cur.getLong(j));
-					break;
-				case Cursor.FIELD_TYPE_FLOAT:
-					json.put(keys[j], cur.getFloat(j));
-					break;
-				case Cursor.FIELD_TYPE_STRING:
-					json.put(keys[j], cur.getString(j));
-					break;
-				case Cursor.FIELD_TYPE_BLOB:
-					json.put(keys[j], cur.getBlob(j));
-					break;
-				}
-			}
-		} catch (Exception e) {
-			return null;
-		}
+  		try {
+  			for(int j=0; j<nCol; j++) {
+  				switch(cur.getType(j)) {
+  				case Cursor.FIELD_TYPE_NULL:
+  					json.put(keys[j], null);
+  					break;
+  				case Cursor.FIELD_TYPE_INTEGER:
+  					json.put(keys[j], cur.getLong(j));
+  					break;
+  				case Cursor.FIELD_TYPE_FLOAT:
+  					json.put(keys[j], cur.getFloat(j));
+  					break;
+  				case Cursor.FIELD_TYPE_STRING:
+  					json.put(keys[j], cur.getString(j));
+  					break;
+  				case Cursor.FIELD_TYPE_BLOB:
+  					json.put(keys[j], cur.getBlob(j));
+  					break;
+  				}
+  			}
+  		} catch (Exception e) {
+  			return null;
+  		}
 
-		return json;
+  		return json;
     }
 
     private void fireEvent(final String event, JSONObject json) {
