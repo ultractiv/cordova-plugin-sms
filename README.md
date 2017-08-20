@@ -108,7 +108,7 @@ let filter: object = {
 ```javascript
 listSMS(filter, successCallback, failureCallback);
 
-startWatch(successCallback, failureCallback);
+startWatch(filter, successCallback, failureCallback);
 stopWatch(successCallback, failureCallback);
 
 enableIntercept(on_off, successCallback, failureCallback);
