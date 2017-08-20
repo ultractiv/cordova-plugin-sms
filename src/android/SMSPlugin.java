@@ -84,11 +84,17 @@ extends CordovaPlugin {
     private boolean mIntercept = false;
     private String lastFrom = "";
     private String lastContent = "";
+    
+    private Matcher _contentPatternMatcher;
+    private Matcher _addressPatternMatcher;
+    private boolean _hasContentPattern;
+    private boolean _hasAddressPattern;
 
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
         PluginResult result = null;
         if (ACTION_START_WATCH.equals(action)) {
-            result = this.startWatch(callbackContext);
+            JSONObject filters = inputs.optJSONObject(0);
+            result = this.startWatch(filters, callbackContext);
         }
         else if (ACTION_STOP_WATCH.equals(action)) {
             result = this.stopWatch(callbackContext);
@@ -139,12 +145,13 @@ extends CordovaPlugin {
         }
     }
 
-    private PluginResult startWatch(CallbackContext callbackContext) {
+    private PluginResult startWatch(JSONObject filter, CallbackContext callbackContext) {
         Log.d(LOGTAG, ACTION_START_WATCH);
         if (this.mObserver == null) {
             this.createContentObserver();
         }
         if (this.mReceiver == null) {
+            this.setIncomingSMSFilters(filter);
             this.createIncomingSMSReceiver();
         }
         if (callbackContext != null) {
@@ -181,6 +188,58 @@ extends CordovaPlugin {
         return null;
     }
 
+    private Matcher setAddressMatcher(JSONObject filter) {
+      String faddress = filter.optString(ADDRESS);
+
+      // use filter.addresses over filter.address if it exists
+      if (filter.has("addresses")) {
+        JSONArray faddressList = filter.optJSONArray("addresses");
+
+        int n;
+        if ((n = faddressList.length()) > 0) {
+          String addresses = "";
+            for (int i = 0; i < n; ++i) {
+                String address;
+                if ((address = faddressList.optString(i)).length() <= 0) continue;
+                addresses += "(" + address + ")";
+            }
+            faddress = addresses.replace(")(", ")|(");
+        }
+      }
+
+      Pattern faddressPattern = Pattern.compile("^" + faddress + "$");
+      Matcher faddressPatternMatcher = faddressPattern.matcher("");
+
+      return faddressPatternMatcher;
+
+    }
+
+    private Matcher setContentMatcher(JSONObject filter) {
+
+      String fcontent = filter.optString(BODY);
+
+      // use filter.contents over filter.body if it exists
+      if (filter.has("contents")) {
+        JSONArray fcontentList = filter.optJSONArray("contents");
+        int n;
+        if ((n = fcontentList.length()) > 0) {
+            String contents = "";
+            for (int i = 0; i < n; ++i) {
+                String content;
+                if ((content = fcontentList.optString(i)).length() <= 0) continue;
+                contents += "(" + content + ")";
+            }
+            fcontent = contents.replace(")(", ")|(");
+        }
+      }
+
+      Pattern fcontentPattern = Pattern.compile("^(" + fcontent + ").*", Pattern.DOTALL);
+      Matcher fcontentPatternMatcher = fcontentPattern.matcher("");
+
+      return fcontentPatternMatcher;
+
+    }
+
     private PluginResult listSMS(JSONObject filter, CallbackContext callbackContext) {
         Log.i(LOGTAG, ACTION_LIST_SMS);
         String uri_filter = filter.has(BOX) ? filter.optString(BOX) : "inbox";
@@ -188,57 +247,24 @@ extends CordovaPlugin {
         int fid = filter.has("_id") ? filter.optInt("_id") : -1;
         int indexFrom = filter.has("indexFrom") ? filter.optInt("indexFrom") : 0;
         int maxCount = filter.has("maxCount") ? filter.optInt("maxCount") : 500;
+
+        boolean hasAddressPattern = filter.has(ADDRESS) || filter.has("addresses");
+        boolean hasContentPattern = filter.has(BODY) || filter.has("contents");
+
+        Matcher faddressPatternMatcher = this.setAddressMatcher(filter);
+        Matcher fcontentPatternMatcher = this.setContentMatcher(filter);
+
         JSONArray jsons = new JSONArray();
         Activity ctx = this.cordova.getActivity();
         Uri uri = Uri.parse((SMS_URI_ALL + uri_filter));
         Cursor cur = ctx.getContentResolver().query(uri, (String[])null, "", (String[])null, null);
-
-        String faddress = filter.optString(ADDRESS);
-        String fcontent = filter.optString(BODY);
-
-        // use filter.addresses over filter.address if it exists
-        if (filter.has("addresses")) {
-          JSONArray faddressList = filter.optJSONArray("addresses");
-
-          int n;
-          if ((n = faddressList.length()) > 0) {
-            String addresses = "";
-              for (int i = 0; i < n; ++i) {
-                  String address;
-                  if ((address = faddressList.optString(i)).length() <= 0) continue;
-                  addresses += "(" + address + ")";
-              }
-              faddress = addresses.replace(")(", ")|(");
-          }
-        }
-
-        Pattern faddressPattern = Pattern.compile("^" + faddress + "$");
-        Matcher faddressPatternMatcher = faddressPattern.matcher("");
-
-        // use filter.contents over filter.body if it exists
-        if (filter.has("contents")) {
-          JSONArray fcontentList = filter.optJSONArray("contents");
-          int n;
-          if ((n = fcontentList.length()) > 0) {
-              String contents = "";
-              for (int i = 0; i < n; ++i) {
-                  String content;
-                  if ((content = fcontentList.optString(i)).length() <= 0) continue;
-                  contents += "(" + content + ")";
-              }
-              fcontent = contents.replace(")(", ")|(");
-          }
-        }
-
-        Pattern fcontentPattern = Pattern.compile("^(" + fcontent + ").*", Pattern.DOTALL);
-        Matcher fcontentPatternMatcher = fcontentPattern.matcher("");
 
         int i = 0; // number of messages matched
         while (cur.moveToNext()) {
 
             if (indexFrom > 0 && cur.getInt(cur.getColumnIndex("_id")) <= indexFrom) continue;
 
-            if (i >= maxCount) break;
+            if (maxCount > 0 && i >= maxCount) break;
 
             boolean matchFilter = false;
 
@@ -249,22 +275,22 @@ extends CordovaPlugin {
                 matchFilter = (fread == cur.getInt(cur.getColumnIndex(READ)));
             }
 
-            else if (faddress.length() > 0 || fcontent.length() > 0) {
+            else if (hasAddressPattern || hasContentPattern) {
               Boolean addressMatch = false;
               Boolean contentMatch = false;
 
-              if (faddress.length() > 0) {
+              if (hasAddressPattern) {
                 String address = cur.getString(cur.getColumnIndex(ADDRESS)).trim();
                 addressMatch = faddressPatternMatcher.reset(address).matches();
               }
 
-              if (fcontent.length() > 0) {
+              if (hasContentPattern) {
                 String content = cur.getString(cur.getColumnIndex(BODY)).trim();
                 contentMatch = fcontentPatternMatcher.reset(content).matches();
               }
 
-              matchFilter = (faddress.length() > 0 && fcontent.length() > 0) ?
-                            (addressMatch && contentMatch) : (faddress.length() > 0 ? addressMatch : contentMatch);
+              matchFilter = (hasAddressPattern && hasContentPattern) ?
+                            (addressMatch && contentMatch) : (hasAddressPattern ? addressMatch : contentMatch);
             }
 
             if (! matchFilter) continue;
@@ -335,12 +361,50 @@ extends CordovaPlugin {
     private void onSMSArrive(JSONObject json) {
         String from = json.optString(ADDRESS);
         String content = json.optString(BODY);
+
         if (from.equals(this.lastFrom) && content.equals(this.lastContent)) {
             return;
         }
+
+        if (this.matchSMSFilter(json) !== true) return;
+
         this.lastFrom = from;
         this.lastContent = content;
         this.fireEvent("onSMSArrive", json);
+    }
+
+    private void setIncomingSMSFilters(JSONObject filter) {
+      this._hasAddressPattern = filter.has(ADDRESS) || filter.has("addresses");
+      this._hasContentPattern = filter.has(BODY) || filter.has("contents");
+      this._addressPatternMatcher = this.setAddressMatcher(filter);
+      this._contentPatternMatcher = this.setContentMatcher(filter);
+    }
+
+    private boolean matchSMSFilter(JSONObject json) {
+
+      String from = json.optString(ADDRESS);
+      String content = json.optString(BODY);
+
+      boolean matchFilter = false;
+
+      if (this._hasAddressPattern || this._hasContentPattern) {
+            boolean addressMatch = false;
+            boolean contentMatch = false;
+
+            if (this._hasAddressPattern) {
+              addressMatch = this._addressPatternMatcher.reset(from).matches();
+            }
+
+            if (this._hasContentPattern) {
+              contentMatch = this._contentPatternMatcher.reset(content).matches();
+            }
+
+            matchFilter = (this._hasAddressPattern && this._hasContentPattern) ?
+                          (addressMatch && contentMatch) : (this._hasAddressPattern ? addressMatch : contentMatch);
+      }
+
+      return matchFilter;
+
     }
 
     protected void createIncomingSMSReceiver() {
@@ -369,9 +433,9 @@ extends CordovaPlugin {
         };
         String[] filterstr = new String[]{SMS_RECEIVED};
         for (int i = 0; i < filterstr.length; ++i) {
-            IntentFilter filter = new IntentFilter(filterstr[i]);
-            filter.setPriority(100);
-            ctx.registerReceiver(this.mReceiver, filter);
+            IntentFilter intentFilter = new IntentFilter(filterstr[i]);
+            intentFilter.setPriority(100);
+            ctx.registerReceiver(this.mReceiver, intentFilter);
             Log.d(LOGTAG, ("broadcast receiver registered for: " + filterstr[i]));
         }
     }

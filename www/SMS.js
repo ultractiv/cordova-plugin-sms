@@ -8,8 +8,8 @@ var safesmsExport = {};
  * Methods
  */
 
-safesmsExport.startWatch = function(successCallback, failureCallback) {
-	cordova.exec( successCallback, failureCallback, 'SMS', 'startWatch', [] );
+safesmsExport.startWatch = function(filter, successCallback, failureCallback) {
+	cordova.exec( successCallback, failureCallback, 'SMS', 'startWatch', [ filter ] );
 };
 
 safesmsExport.stopWatch = function(successCallback, failureCallback) {
