@@ -84,7 +84,7 @@ extends CordovaPlugin {
     private boolean mIntercept = false;
     private String lastFrom = "";
     private String lastContent = "";
-    
+
     private Matcher _contentPatternMatcher;
     private Matcher _addressPatternMatcher;
     private boolean _hasContentPattern;
@@ -366,7 +366,7 @@ extends CordovaPlugin {
             return;
         }
 
-        if (this.matchSMSFilter(json) !== true) return;
+        if (! this.matchSMSFilter(json)) return;
 
         this.lastFrom = from;
         this.lastContent = content;
