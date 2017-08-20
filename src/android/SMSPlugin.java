@@ -125,13 +125,15 @@ extends CordovaPlugin {
         return "SMS";
     }
 
+    /*
+
     public final String md5(String s) {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.update(s.getBytes());
             byte[] messageDigest = digest.digest();
             StringBuffer hexString = new StringBuffer();
-            for (int i = 0; i < messageDigest.length; ++i) {
+            for (int i = 0; i < messageDigest.length; i++) {
                 String h = Integer.toHexString(255 & messageDigest[i]);
                 while (h.length() < 2) {
                     h = "0" + h;
@@ -143,6 +145,31 @@ extends CordovaPlugin {
         catch (NoSuchAlgorithmException digest) {
             return "";
         }
+    }
+
+    */
+
+    private JSONObject hashMessage(JSONObject json) {
+      // hash message here using SHA256
+      // use only the date_sent , body , and address fields as input
+      try {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(json.optString("address").getBytes());
+        md.update(json.optString("body").getBytes());
+        md.update(json.optString("date_sent").getBytes());
+        byte[] digest = md.digest();
+        StringBuffer hash = new StringBuffer();
+        for (int i = 0; i < digest.length; i++) {
+            String hex = Integer.toHexString(0xff & digest[i]);
+            if (hex.length() == 1) hash.append("0");
+            hash.append(hex);
+        }
+        json.put("hash", hash.toString());
+      }
+      catch (Exception e) {
+
+      }
+      return json;
     }
 
     private PluginResult startWatch(JSONObject filter, CallbackContext callbackContext) {
@@ -303,6 +330,8 @@ extends CordovaPlugin {
                 return null;
             }
 
+            json = this.hashMessage(json);
+
             jsons.put((Object)json);
 
             ++i;
@@ -370,6 +399,9 @@ extends CordovaPlugin {
 
         this.lastFrom = from;
         this.lastContent = content;
+
+        json = this.hashMessage(json);
+
         this.fireEvent("onSMSArrive", json);
     }
 
